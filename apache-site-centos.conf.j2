@@ -1,0 +1,15 @@
+Listen {{ (item|int) + 1000 }}
+
+<VirtualHost *:{{ (item|int) + 1000 }}>
+    ServerAdmin team{{ item }}@localhost
+    DocumentRoot /var/www/team{{ item }}   
+
+    ErrorLog /var/log/httpd/team{{ item }}-error.log
+    CustomLog /var/log/httpd/team{{ item }}-access.log combined
+
+    <Directory /var/www/team{{ item }}>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>

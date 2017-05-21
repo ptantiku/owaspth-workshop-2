@@ -1,6 +1,6 @@
 ---
 
-- hosts: all
+- hosts: prod
   become: true
   user: root
 
@@ -12,9 +12,9 @@
       - php
       - php-gd
       - php-curl
-      - php-imagick
       - php-mysql
     #  - php5-mysqli
+      - php-pdo
       - php-mcrypt
     # - php-doctrine-common
     # - php-doctrine-bundle
@@ -32,15 +32,33 @@
     # - php-symfony-security-bundle
     # - php-validate
     # - php-xdebug
-      - apache2
-      - libapache2-mod-php
       - nodejs
       - npm
     MySQL_root_pass: MySQL_P@ssw0rd
   
   tasks:
+    - name: test
+      debug:
+        msg: "Test {{ ansible_os_family }} / {{ ansible_distribution }}"
+
     - name: set timezone to bangkok
       timezone: name="Asia/Bangkok"
+      tags: server
+
+    - name: install web server (Ubuntu)
+      apt: name={{item}} state="latest"
+      with_items:
+        - apache2
+        - libapache2-mod-php
+        - php-imagick
+      when: ansible_os_family == 'Debian'
+      tags: server
+
+    - name: install web server (CentOS)
+      yum: name={{item}} state="latest"
+      with_items:
+        - httpd
+      when: ansible_os_family == 'RedHat'
       tags: server
 
     - name: install packages
@@ -55,6 +73,7 @@
         state: link
         path: /usr/bin/node
         src: /usr/bin/nodejs
+      when: ansible_os_family == 'Debian'
       tags: server
 
     - name: create 10 groups
@@ -74,13 +93,24 @@
       with_sequence: start=1 end=10 format="team%d"
       tags: server
 
-    - name: set www-data to all the groups
+    - name: set www-data to all the groups (Ubuntu)
       user:
         name: "www-data"
         append: yes
         group: "www-data"
         groups: "{{item}}"
       with_sequence: start=1 end=10 format="team%d"
+      when: ansible_os_family == 'Debian'
+      tags: server
+
+    - name: set apache to all the groups (CentOS)
+      user:
+        name: "apache"
+        append: yes
+        group: "apache"
+        groups: "{{item}}"
+      with_sequence: start=1 end=10 format="team%d"
+      when: ansible_os_family == 'RedHat'
       tags: server
 
     - name: create html folder for each user
@@ -105,7 +135,7 @@
       with_sequence: start=1 end=10 format="team%d"
       tags: server
 
-    - name: copy apache config for all teams
+    - name: copy apache config for all teams (Ubuntu)
       template:
         src: "apache-site.conf.j2"
         dest: "/etc/apache2/sites-available/team{{item}}.conf"
@@ -113,6 +143,22 @@
         group: root
         mode: 0644
       with_sequence: start=1 end=10
+      when: ansible_os_family == 'Debian'
+      notify:
+        - restart apache2
+      tags: apache
+
+    - name: copy apache config for all teams (CentOS)
+      template:
+        src: "apache-site-centos.conf.j2"
+        dest: "/etc/httpd/conf.d/team{{item}}.conf"
+        owner: root
+        group: root
+        mode: 0644
+      with_sequence: start=1 end=10
+      when: ansible_os_family == 'RedHat'
+      notify:
+        - restart apache2
       tags: apache
 
     - name: enable mod
@@ -123,12 +169,14 @@
         - rewrite
         - headers
         - php7.0
+      when: ansible_os_family == 'Debian'
       notify:
         - restart apache2
       tags: apache
 
     - name: enable sites
       command: a2ensite team*
+      when: ansible_os_family == 'Debian'
       notify:
         - restart apache2
       tags: apache
@@ -145,7 +193,7 @@
     - name: set default page for each team
       template:
         src: team_index.html.j2
-        dest: /var/www/{{ item }}/index.html
+        dest: /var/www/{{item}}/index.html
         owner: root
         group: root
         mode: 0644
@@ -185,9 +233,31 @@
         - restart mysql
       tags: mysql
 
-    - name: Deletes anonymous MySQL server user for localhost
-      mysql_user: user="" state="absent" login_password="{{ MySQL_root_pass }}" login_user="root"
+    - name: Setup MySQL Repo for Centos
+      yum: name="https://repo.mysql.com//mysql57-community-release-el7-11.noarch.rpm" state="present"
+      when: ansible_os_family == "RedHat"
+
+    - name: Install MySQL
+      yum: package={{ item }} state="latest"
+      when: ansible_os_family == "RedHat"
+      with_items:
+        - mysql-community-server
+        - mysql-community-client
+        - MySQL-python
+      notify:
+        - restart mysql
       tags: mysql
+
+    - name: Set root password from temporary password
+      shell: |
+        temp_pass=$(grep -i 'temporary password' /var/log/mysqld.log | grep -oP '[^ ]*$')
+        if [[ ! -z $temp_pass ]]
+        then
+            echo "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{MySQL_root_pass}}';" | mysql -u root -p"$temp_pass" --connect-expired-password && echo ''>/var/log/mysqld.log
+        else
+            echo 'password is already set'
+        fi
+      when: ansible_os_family == "RedHat"
 
     - name: Secures the MySQL root user
       mysql_user: user="root" password="{{ MySQL_root_pass }}" host="{{ item }}" login_password="{{MySQL_root_pass}}" login_user="root"
@@ -200,6 +270,10 @@
         - restart mysql
       tags: mysql
 
+    - name: Deletes anonymous MySQL server user for localhost
+      mysql_user: user="" state="absent" login_password="{{ MySQL_root_pass }}" login_user="root"
+      tags: mysql
+
     - name: Removes the MySQL test database
       mysql_db: db=test state=absent login_password="{{ MySQL_root_pass }}" login_user="root"
       tags: mysql
@@ -209,6 +283,14 @@
       with_sequence: start=1 end=10 format="team%d"
       tags: mysql
 
+    - name: temporary set password policy to low
+      shell: |
+        echo 'SET GLOBAL validate_password_length = 5;
+        SET GLOBAL validate_password_number_count = 0;
+        SET GLOBAL validate_password_mixed_case_count = 0;
+        SET GLOBAL validate_password_special_char_count = 0;' | mysql -u root -p"{{MySQL_root_pass}}" --connect-expired-password
+      when: ansible_os_family == 'RedHat'
+
     - name: create MySQL account for each team
       mysql_user: user="{{ item }}" password="password" host="localhost" priv="{{item}}.*:ALL" login_password="{{MySQL_root_pass}}" login_user="root"
       with_sequence: start=1 end=10 format="team%d"
@@ -217,7 +299,16 @@
   handlers:
     - name: restart apache2
       service: name=apache2 state=restarted
+      when: ansible_os_family == 'Debian'
+
+    - name: restart apache2
+      service: name=httpd state=restarted
+      when: ansible_os_family == 'RedHat'
 
     - name: restart mysql
       service: name=mysql state=restarted
+      when: ansible_os_family == 'Debian'
 
+    - name: restart mysql
+      service: name=mysqld state=restarted
+      when: ansible_os_family == 'RedHat'
