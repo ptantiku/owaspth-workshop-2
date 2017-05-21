@@ -1,0 +1,9 @@
+web:
+    image: php:apache
+    environment:
+        - TZ=Asia/Bangkok
+    volumes:
+        - /owaspth-attacker/src:/var/www/html
+    ports:
+        - 80:80
+        - 443:443
