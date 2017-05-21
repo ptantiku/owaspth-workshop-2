@@ -58,6 +58,7 @@
       yum: name={{item}} state="latest"
       with_items:
         - httpd
+        - policycoreutils-python
       when: ansible_os_family == 'RedHat'
       tags: server
 
@@ -144,6 +145,14 @@
         mode: 0644
       with_sequence: start=1 end=10
       when: ansible_os_family == 'Debian'
+      notify:
+        - restart apache2
+      tags: apache
+
+    - name: enable http_port in SELinux (CentOS)
+      shell: semanage port -a -t http_port_t -p tcp {{item}}
+      with_sequence: start=1001 end=1010
+      when: ansible_os_family == 'RedHat'
       notify:
         - restart apache2
       tags: apache
