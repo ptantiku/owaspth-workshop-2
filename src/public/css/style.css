@@ -41,3 +41,10 @@ img.item-img{
   display:inline-block;
   margin-right: 5px;
 }
+.navbar-nav li form.form-inline {
+  display: inline-block;
+  padding: 8px;
+}
+.panel-footer{
+  text-align: right;
+}

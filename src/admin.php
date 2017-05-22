@@ -8,34 +8,26 @@
 
 require('config.php');
 
-// deal with cookie (vulnerable by cookie manipulation)
-if(empty($_COOKIE['username'])){
-    setcookie('username', 'anonymous');
-    $username = 'anonymous';
-}else{
-    $username = $_COOKIE['username'];
-}
-
 //check if logged in
-if ($username == 'anonymous'){
-    $loggedin = false;
-    header('Location: login.php');
-    exit;
-}else if($username == 'admin'){
-    $loggedin = true;
-}else{
-    die('Admin only');
-}
+if (empty($_SESSION['username'])){
+    $error_msg = 'You are not admin. Please login first.';
+    header('Location: index.php?msg='.$error_msg);
+    die($error_msg);
 
-// list all files in upload folder
-$file_list = array_diff(scandir('upload/'), array('.','..'));
-if(!empty($_GET['query'])){
+}else if($_SESSION['username'] !== 'admin'){
 
-    // using Linux command "stat" to see file's status
-    $query = $_GET['query'];
-    $result = shell_exec("stat upload/$query");
+    $error_msg = 'Admin Only!';
+    header('Location: index.php?msg='.$error_msg);
+    die($error_msg);
 
 }
+
+// query all private messages from database
+$posts = array();
+$sql = "select * from messages where receiver=? order by created_date desc;";
+$stmt = $db->prepare($sql);
+$stmt->execute([$_SESSION['username']]);
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <!doctype html>
@@ -61,7 +53,7 @@ if(!empty($_GET['query'])){
         </button>
         <a class="navbar-brand" href="#">
             <img src="public/img/logo_sm.png" alt="OWASP Thailand Logo"/>
-            OWASP-TH Workshop 1: <?php echo $team; ?>
+            OWASP-TH Workshop 2: <?=$team?>
         </a>
       </div><!--/.navbar-header -->
       <div id="navbar" class="collapse navbar-collapse">
@@ -70,7 +62,7 @@ if(!empty($_GET['query'])){
           <li class="active"><a href="admin.php">Admin</a></li>
         </ul><!-- /.navbar -->
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="#" class="username"><?php echo $username; ?></a></li>
+          <li><a href="#" class="username"><?=$_SESSION['username']?></a></li>
           <li><a href="logout.php">Logout</a></li>
         </ul><!-- /.navbar-right -->
       </div><!-- /.nav-collapse -->
@@ -81,64 +73,33 @@ if(!empty($_GET['query'])){
 
     <div id="header" class="row">
       <div class="col-md-12 center">
-        <h1>OWASP-TH Workshop 1: Admin Page</h1>
+        <h1>OWASP-TH Workshop 2: Admin Page</h1>
         <p>
           You're logged in as
-          <span class="username"><?php echo $_COOKIE['username']; ?></span>
+          <span class="username"><?=$_SESSION['username']?></span>
         </p>
       </div>
     </div><!-- /#header -->
 
-    <div id="body" class="row">
-      <div class="col-md-12">
-        <div class="row">
-          <div class="col-md-6 col-md-offset-3">
-            <h2>File Management</h2>
+    <hr/>
 
-            <div class="row">
-              <div class="col-md-12">
-                File list:<br/>
-
-                <?php foreach($file_list as $file): ?>
-
-                  <a class="label label-default" href="admin.php?query=<?php echo $file; ?>">
-                    <?php echo $file;?>
-                  </a>
-
-                <?php endforeach; ?>
-
-              </div>
-            </div>
-            <br/>
-
-            <form class="form-horizontal col-md-12" method="GET" action="">
-              <div class="form-group">
-                <div class="input-group">
-                  <input id="query" name="query" type="text" class="form-control"
-                    placeholder="Enter file name here to check file size ..."/>
-                  <span class="input-group-btn">
-                    <button class="btn btn-primary" type="submit">Check</button>
-                  </span>
-                </div>
-              </div>
-            </form><!-- /form -->
-
-            <?php if(!empty($_GET['query'])):   // if query, show result ?>
-
-              <div id="result" class="row">
-                <div class="col-md-12">
-                  <pre><?php echo $result; ?></pre>
-                </div>
-              </div><!-- /#result -->
-
-            <?php endif; ?>
-
+    <?php if(!empty($messages)): ?>
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <h2>Private Messages:</h2>
+    	<?php foreach($messages as $message): ?>
+        <div class="panel panel-primary">
+          <div class="panel-heading"></div>
+          <div class="panel-body"><?=$message['message']?></div>
+          <div class="panel-footer">
+            From: <?=$message['sender']?> @ <?=$message['created_date']?>
           </div>
-        </div><!-- /.row -->
+        </div>
+    	<?php endforeach; ?>
       </div>
-    </div><!-- /#body -->
+    </div>
+    <?php endif; ?>
 
   </div><!-- /.container -->
-
 </body>
 </html>

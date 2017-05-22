@@ -4,6 +4,7 @@
  * - database config
  * - database initial connection
  */
+session_start();
 
 error_reporting(E_ALL & ~E_DEPRECATED); #TODO remove
 ini_set('display_errors', '1');

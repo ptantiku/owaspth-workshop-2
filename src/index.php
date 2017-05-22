@@ -3,45 +3,15 @@
 /*
  * index.php
  * - main page
- * - search for books
+ * - display posts
  */
-
 require('config.php');
 
-// deal with cookie
-if(empty($_COOKIE['username'])){
-    setcookie('username', 'anonymous');
-    $username = 'anonymous';
-}else {
-    $username = $_COOKIE['username'];
-}
+// query all posts from database
+$posts = array();
+$sql = "select * from posts order by created_date desc;";
+$posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
 
-//check if logged in
-if ($username == 'anonymous'){
-    $loggedin = false;
-}else{
-    $loggedin = true;
-}
-
-// query books from database
-if(empty($_GET['query'])){
-    $sql = 'select * from users limit 10';
-}else{
-    $query = '%'.$_GET['query'].'%';
-    $sql = "select * from users where username like '$query' limit 10";
-}
-
-// set default value for books
-$books = array();
-
-try{
-    foreach($db->query($sql,PDO::FETCH_ASSOC) as $row){
-        // pull data from database into $books
-        array_push($books, $row);
-    }
-}catch (PDOException $ex){
-    echo $ex->getMessage();
-}
 ?>
 <!doctype html>
 <html>
@@ -66,30 +36,35 @@ try{
         </button>
         <a class="navbar-brand" href="#">
             <img src="public/img/logo_sm.png" alt="OWASP Thailand Logo"/>
-            OWASP-TH Workshop 2: <?php echo $team; ?>
+            OWASP-TH Workshop 2: <?=$team?>
         </a>
       </div><!--/.navbar-header -->
       <div id="navbar" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
           <li class="active"><a href="#">Home</a></li>
 
-          <?php if($loggedin): ?>
-
+          <?php if(isset($_SESSION['username']) && $_SESSION['username']==='admin'): ?>
             <li><a href="admin.php">Admin</a></li>
-
           <?php endif; ?>
+	  <?= session_id() ?>
 
         </ul><!-- /.navbar -->
         <ul class="nav navbar-nav navbar-right">
 
-          <?php if($loggedin): ?>
+          <?php if(!empty($_SESSION['username'])): ?>
 
-            <li><a href="#" class="username"><?php echo $username; ?></a></li>
+            <li><a href="#" class="username"><?=$_SESSION['username']?></a></li>
             <li><a href="logout.php">Logout</a></li>
 
           <?php else: ?>
 
-            <li><a href="login.php">Login</a></li>
+	    <li>
+	      <form class="form-inline" method="post" action="login.php">
+    	        <input type="text" class="form-control" id="username" name="username" placeholder="username">
+    	        <input type="password" class="form-control" id="password" name="password" placeholder="password">
+		<button type="submit" class="form-control">Login</button>
+	      </form>
+	    </li>
 
           <?php endif; ?>
 
@@ -103,47 +78,37 @@ try{
     <div id="header" class="row">
       <div class="col-md-12 center">
         <h1>Welcome to OWASP-TH Workshop 2</h1>
-
-        <?php if(empty($username)): ?>
-
-          <h4>You need to login to see the page.</h4>
-          <h4><a class="label label-primary" href="login.php">Login here</a></h4>
-
-        <?php endif; ?>
-
       </div>
     </div><!-- /#header -->
 
     <hr/>
 
-    <div id="search-form" class="row">
-      <div class="col-md-12">
-        <form class="form-horizontal" method="GET" action="">
-          <div class="form-group">
-            <div class="input-group">
-              <input id="query" name="query" type="text" class="form-control" placeholder="Search for books using title or author name ...">
-              <span class="input-group-btn">
-                <button class="btn btn-primary" type="submit">Search</button>
-              </span>
-            </div>
+    <?php if(!empty($_GET['msg'])): ?>
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <strong>Error!</strong> <?=$_GET['msg']?>
+        </div><!-- /.alert -->
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if(!empty($posts)): ?>
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <h2>Posts:</h2>
+    	<?php foreach($posts as $post): ?>
+        <div class="panel panel-primary">
+          <div class="panel-heading"><?=$post['title']?></div>
+          <div class="panel-body"><?=$post['message']?></div>
+          <div class="panel-footer">
+            From: <?=$post['owner']?> @ <?=$post['created_date']?>
           </div>
-        </form>
-      </div>
-    </div><!-- /#search-form -->
-
-    <?php if(isset($_GET['query'])): ?>
-
-      <div class="row">
-        <div class="col-md-12">
-          <h4>Search for: <?php echo $_GET['query']; ?></h4>
         </div>
+    	<?php endforeach; ?>
       </div>
-
-      <div class="row">
-        <pre>
-        <?php var_dump($books); ?>
-        </pre>
-      </div>
+    </div>
     <?php endif; ?>
 
   </div><!-- /.container -->
