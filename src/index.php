@@ -49,26 +49,24 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
 	  <?= session_id() ?>
 
         </ul><!-- /.navbar -->
-        <ul class="nav navbar-nav navbar-right">
+	
+	<?php if(empty($_SESSION['username'])): ?>
 
-          <?php if(!empty($_SESSION['username'])): ?>
+          <form class="navbar-form navbar-right" method="post" action="login.php">
+            <input type="text" class="form-control" id="username" name="username" placeholder="username">
+            <input type="password" class="form-control" id="password" name="password" placeholder="password">
+            <button type="submit" class="form-control">Login</button>
+          </form><!-- /.navbar-form -->
 
+	<?php else: ?>
+
+          <ul class="nav navbar-nav navbar-right">
             <li><a href="#" class="username"><?=$_SESSION['username']?></a></li>
             <li><a href="logout.php">Logout</a></li>
+          </ul><!-- /.navbar-right -->
 
-          <?php else: ?>
-
-	    <li>
-	      <form class="form-inline" method="post" action="login.php">
-    	        <input type="text" class="form-control" id="username" name="username" placeholder="username">
-    	        <input type="password" class="form-control" id="password" name="password" placeholder="password">
-		<button type="submit" class="form-control">Login</button>
-	      </form>
-	    </li>
-
-          <?php endif; ?>
-
-        </ul><!-- /.navbar-right -->
+	<?php endif; ?>
+	
       </div><!-- /.nav-collapse -->
     </div><!-- /.container -->
   </nav><!-- /.navbar -->
@@ -98,7 +96,7 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
     <div class="row">
       <div class="col-md-6 col-md-offset-3">
         <h2>Posts:</h2>
-    	<?php foreach($posts as $post): ?>
+	<?php foreach($posts as $post): ?>
         <div class="panel panel-primary">
           <div class="panel-heading"><?=$post['title']?></div>
           <div class="panel-body"><?=$post['message']?></div>
@@ -106,7 +104,7 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
             From: <?=$post['owner']?> @ <?=$post['created_date']?>
           </div>
         </div>
-    	<?php endforeach; ?>
+	<?php endforeach; ?>
       </div>
     </div>
     <?php endif; ?>
