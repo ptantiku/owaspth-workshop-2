@@ -9,14 +9,14 @@ require('config.php');
 
 //check if logged in
 if (empty($_SESSION['username'])){
-    $error_msg = 'You are not admin. Please login first.';
+    $error_msg = 'You are not login. Please login first.';
     header('Location: index.php?msg='.$error_msg);
     die($error_msg);
 
-}else if($_SESSION['username'] !== 'admin'){
+}else if($_SESSION['username'] === 'admin'){
 
-    $error_msg = 'Admin Only!';
-    header('Location: index.php?msg='.$error_msg);
+    $error_msg = 'redirecting to admin page';
+    header('Location: admin.php');
     die($error_msg);
 
 }
@@ -33,7 +33,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>OWASP-TH: Admin Page</title>
+  <title>OWASP-TH: User Page</title>
   <link rel="stylesheet" href="public/css/bootstrap.min.css">
   <link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
   <link rel="stylesheet" href="public/css/style.css">
@@ -58,7 +58,6 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <div id="navbar" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
           <li><a href="index.php">Home</a></li>
-          <li class="active"><a href="admin.php">Admin</a></li>
         </ul><!-- /.navbar -->
         <ul class="nav navbar-nav navbar-right">
           <li><a href="#" class="username"><?=$_SESSION['username']?></a></li>
@@ -72,7 +71,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <div id="header" class="row">
       <div class="col-md-12 center">
-        <h1>OWASP-TH Workshop 2: Admin Page</h1>
+        <h1>OWASP-TH Workshop 2: User Page</h1>
         <p>
           You're logged in as
           <span class="username"><?=$_SESSION['username']?></span>
