@@ -83,20 +83,20 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <hr/>
 
     <?php if(!empty($messages)): ?>
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3">
-        <h2>Private Messages:</h2>
-    	<?php foreach($messages as $message): ?>
-        <div class="panel panel-primary">
-          <div class="panel-heading"></div>
-          <div class="panel-body"><?=$message['message']?></div>
-          <div class="panel-footer">
-            From: <?=$message['sender']?> @ <?=$message['created_date']?>
-          </div>
+      <!-- show all messages -->
+      <div id="messages" class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <h3>Private Messages for <?=$_SESSION['username']?>:</h3>
+      	<?php foreach($messages as $message): ?>
+          <div class="panel panel-warning">
+            <div class="panel-heading">
+              From: <?=$message['sender']?> @ <?=$message['created_date']?>
+            </div>
+            <div class="panel-body"><?=$message['message']?></div>
+          </div><!-- /panel -->
+      	<?php endforeach; ?>
         </div>
-    	<?php endforeach; ?>
-      </div>
-    </div>
+      </div><!-- /#messages -->
     <?php endif; ?>
 
   </div><!-- /.container -->

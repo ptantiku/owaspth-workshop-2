@@ -43,30 +43,42 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
         <ul class="nav navbar-nav">
           <li class="active"><a href="#">Home</a></li>
 
-          <?php if(isset($_SESSION['username']) && $_SESSION['username']==='admin'): ?>
-            <li><a href="admin.php">Admin</a></li>
+          <?php if(isset($_SESSION['username'])): ?>
+            <?php if($_SESSION['username']==='admin'): ?>
+
+              <!-- show admin page button -->
+              <li><a href="admin.php">Admin</a></li>
+
+            <?php else: ?>
+
+              <!-- show user page button -->
+              <li><a href="user.php">User</a></li>
+
+            <?php endif; ?>
           <?php endif; ?>
-	  <?= session_id() ?>
+      <?= session_id() ?>
 
         </ul><!-- /.navbar -->
-	
-	<?php if(empty($_SESSION['username'])): ?>
 
+        <?php if(empty($_SESSION['username'])): ?>
+
+          <!-- user has not logged in -->
           <form class="navbar-form navbar-right" method="post" action="login.php">
             <input type="text" class="form-control" id="username" name="username" placeholder="username">
             <input type="password" class="form-control" id="password" name="password" placeholder="password">
             <button type="submit" class="form-control">Login</button>
           </form><!-- /.navbar-form -->
 
-	<?php else: ?>
+        <?php else: ?>
 
+          <!-- user has logged in -->
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#" class="username"><?=$_SESSION['username']?></a></li>
             <li><a href="logout.php">Logout</a></li>
           </ul><!-- /.navbar-right -->
 
-	<?php endif; ?>
-	
+        <?php endif; ?>
+
       </div><!-- /.nav-collapse -->
     </div><!-- /.container -->
   </nav><!-- /.navbar -->
@@ -82,31 +94,35 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
     <hr/>
 
     <?php if(!empty($_GET['msg'])): ?>
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3">
-        <div class="alert alert-danger alert-dismissible" role="alert">
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <strong>Error!</strong> <?=$_GET['msg']?>
-        </div><!-- /.alert -->
+      <!-- display error message -->
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Error!</strong> <?=$_GET['msg']?>
+          </div><!-- /.alert -->
+        </div>
       </div>
-    </div>
     <?php endif; ?>
 
     <?php if(!empty($posts)): ?>
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3">
-        <h2>Posts:</h2>
-	<?php foreach($posts as $post): ?>
-        <div class="panel panel-primary">
-          <div class="panel-heading"><?=$post['title']?></div>
-          <div class="panel-body"><?=$post['message']?></div>
-          <div class="panel-footer">
-            From: <?=$post['owner']?> @ <?=$post['created_date']?>
-          </div>
+      <!-- show all posts -->
+      <div id="posts" class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <h2>All Public Posts:</h2>
+          <?php foreach($posts as $post): ?>
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+                <strong><?=$post['title']?></strong>
+              </div>
+              <div class="panel-body"><?=$post['message']?></div>
+              <div class="panel-footer">
+                From: <?=$post['owner']?> @ <?=$post['created_date']?>
+              </div>
+            </div><!-- /panel -->
+          <?php endforeach; ?>
         </div>
-	<?php endforeach; ?>
-      </div>
-    </div>
+      </div><!-- /#posts -->
     <?php endif; ?>
 
   </div><!-- /.container -->

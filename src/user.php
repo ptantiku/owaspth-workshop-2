@@ -1,8 +1,10 @@
 <?php
 /*
- * admin.php
- * - only logged in user can see
- * - check status of file, using "stat <file.pdf>"
+ * user.php
+ * - only logged-in user
+ * - can post to public
+ * - can private message to admin
+ * - can see admin's reply messages
  */
 
 require('config.php');
@@ -58,6 +60,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <div id="navbar" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
           <li><a href="index.php">Home</a></li>
+          <li class="active"><a href="user.php">User</a></li>
         </ul><!-- /.navbar -->
         <ul class="nav navbar-nav navbar-right">
           <li><a href="#" class="username"><?=$_SESSION['username']?></a></li>
@@ -81,21 +84,64 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <hr/>
 
-    <?php if(!empty($messages)): ?>
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3">
-        <h2>Private Messages:</h2>
-    	<?php foreach($messages as $message): ?>
-        <div class="panel panel-primary">
-          <div class="panel-heading"></div>
-          <div class="panel-body"><?=$message['message']?></div>
-          <div class="panel-footer">
-            From: <?=$message['sender']?> @ <?=$message['created_date']?>
-          </div>
+    <?php if(!empty($_GET['success_msg'])): ?>
+      <!-- display success message -->
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <div class="alert alert-success alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Success!</strong> <?=$_GET['success_msg']?>
+          </div><!-- /.alert -->
         </div>
-    	<?php endforeach; ?>
       </div>
-    </div>
+    <?php endif; ?>
+
+    <?php if(!empty($_GET['error_msg'])): ?>
+      <!-- display error message -->
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Error!</strong> <?=$_GET['error_msg']?>
+          </div><!-- /.alert -->
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <div id="public-post" class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <h3>Post a Public Message</h3>
+        <form method="post" action="post.php">
+          <div class="form-group">
+            <label for="title">Post Title</label>
+            <input id="title" name="title" type="text" class="form-control" placeholder="Post Title">
+          </div>
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" class="form-control" rows=3 placeholder="Message"></textarea>
+          </div>
+          <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+      </div>
+    </div><!-- /#public-post -->
+
+    <hr/>
+
+    <?php if(!empty($messages)): ?>
+      <!-- show all messages -->
+      <div id="messages" class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <h3>Private Messages for <?=$_SESSION['username']?>:</h3>
+      	<?php foreach($messages as $message): ?>
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              From: <?=$message['sender']?> @ <?=$message['created_date']?>
+            </div>
+            <div class="panel-body"><?=$message['message']?></div>
+          </div><!-- /panel -->
+      	<?php endforeach; ?>
+        </div>
+      </div><!-- /#messages -->
     <?php endif; ?>
 
   </div><!-- /.container -->
