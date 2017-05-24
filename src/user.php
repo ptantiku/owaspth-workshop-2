@@ -110,7 +110,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <div id="public-post" class="row">
       <div class="col-md-6 col-md-offset-3">
-        <h3>Post a Public Message</h3>
+        <h3>Post a public message</h3>
         <form method="post" action="post.php">
           <div class="form-group">
             <label for="title">Post Title</label>
@@ -127,22 +127,22 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <hr/>
 
-    <?php if(!empty($messages)): ?>
-      <!-- show all messages -->
-      <div id="messages" class="row">
-        <div class="col-md-6 col-md-offset-3">
-          <h3>Private Messages for <?=$_SESSION['username']?>:</h3>
-      	<?php foreach($messages as $message): ?>
-          <div class="panel panel-primary">
+    <div id="private-message" class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <h3>Send a message to admin</h3>
+        <form method="post" action="dm.php">
+          <div class="panel panel-warning">
             <div class="panel-heading">
-              From: <?=$message['sender']?> @ <?=$message['created_date']?>
+              message            
             </div>
-            <div class="panel-body"><?=$message['message']?></div>
+	    <div class="panel-body">
+              <textarea id="message" name="message" class="form-control" rows=3 placeholder="Message"></textarea>
+            </div>
           </div><!-- /panel -->
-      	<?php endforeach; ?>
-        </div>
-      </div><!-- /#messages -->
-    <?php endif; ?>
+          <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+      </div>
+    </div><!-- /#private-message -->
 
   </div><!-- /.container -->
 </body>
