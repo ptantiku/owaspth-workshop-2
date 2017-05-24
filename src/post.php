@@ -7,12 +7,14 @@
 
 require('config.php');
 
+/** check permission **/
 if(empty($_SESSION['username'])){
     $msg = 'You need to login first.';
-    header('Location: user.php?error_msg='.$msg);
+    header('Location: index.php?msg='.$msg);
     die($msg);
 }
 
+/** add post into database **/
 if(!empty($_POST['title']) && !empty($_POST['message'])) {
 
     $sql = 'insert into posts(owner, title, message) values (?,?,?);';
@@ -24,7 +26,13 @@ if(!empty($_POST['title']) && !empty($_POST['message'])) {
             $_POST['message']
         ]
     );
-    header('Location: user.php?success_msg=Your message is posted.');
+    if($stmt->rowCount()>0){
+        //successfully posted
+        header('Location: user.php?success_msg=Your message is posted. See it at Home page.');
+    } else {
+        //failed to post
+        header('Location: user.php?error_msg=Failed to post the message.');
+    }
 } else {
     header('Location: user.php?error_msg=Title and message cannot be empty.');
 }
