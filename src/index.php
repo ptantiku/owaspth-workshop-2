@@ -114,6 +114,13 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
             <div class="panel panel-primary">
               <div class="panel-heading">
                 <strong><?=$post['title']?></strong>
+                <?php if(!empty($_SESSION['username'])): ?>
+		  <div class="pull-right">
+		    <a href="remove_post.php?post_id=<?=$post['id']?>">
+                      <i class="glyphicon glyphicon-white glyphicon-trash"></i>
+                    </a>
+		  </div>
+                <?php endif; ?>
               </div>
               <div class="panel-body"><?=$post['message']?></div>
               <div class="panel-footer">

@@ -9,7 +9,7 @@ require('config.php');
 
 if(empty($_SESSION['username'])){
     $msg = 'You need to login first.';
-    header('Location: user.php?msg='.$msg);
+    header('Location: user.php?error_msg='.$msg);
     die($msg);
 }
 
