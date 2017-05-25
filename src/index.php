@@ -124,7 +124,7 @@ $posts = $db->query($sql,PDO::FETCH_ASSOC)->fetchAll();
               </div>
               <div class="panel-body"><?=$post['message']?></div>
               <div class="panel-footer">
-                From: <?=$post['owner']?> @ <?=$post['created_date']?>
+                From: <?=$post['owner']?>@securitylab.ninja [<?=$post['created_date']?>]
               </div>
             </div><!-- /panel -->
           <?php endforeach; ?>
